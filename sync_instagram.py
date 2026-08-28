@@ -7,7 +7,7 @@ import urllib.request
 from playwright.sync_api import sync_playwright
 
 def cleanup_old_media(allowed_files):
-    """Remove arquivos antigos de mídia que não estão na lista dos ativos"""
+    """Remove arquivos antigos de mídia que não estão na lista dos 12 ativos"""
     for file_path in glob.glob("media_*.*") + glob.glob("video_*.mp4"):
         if file_path not in allowed_files:
             try:
@@ -63,7 +63,6 @@ def main():
             page.goto(f"https://www.instagram.com/{username}/", wait_until="domcontentloaded", timeout=60000)
             time.sleep(5)
 
-            # Varredura progressiva com ordenação estrita por posição visual
             for scroll_step in range(6):
                 raw_items = page.evaluate("""() => {
                     const links = Array.from(document.querySelectorAll("a[href*='/p/'], a[href*='/reel/']"));
@@ -112,19 +111,37 @@ def main():
         allowed_files = []
 
         for idx, post_url in enumerate(posts_urls, start=1):
-            print(f"\n--- Processando Post #{idx} (Ordem Cronológica): {post_url} ---")
+            print(f"\n--- Processando Post #{idx}: {post_url} ---")
             is_video = "/reel/" in post_url
             caption = ""
             image_download_url = ""
 
             try:
                 page.goto(post_url, wait_until="domcontentloaded", timeout=30000)
-                time.sleep(3)
+                time.sleep(4)
 
-                caption_elem = page.query_selector("h1, div[class*='_a9zs'], span[class*='_aacl']")
-                if caption_elem:
-                    caption = caption_elem.inner_text().strip()
+                # Extrator avançado de legenda no Instagram
+                caption = page.evaluate("""() => {
+                    // 1. Tenta tag h1 principal
+                    const h1 = document.querySelector("h1");
+                    if (h1 && h1.innerText.trim()) return h1.innerText.trim();
 
+                    // 2. Tenta span com texto do post
+                    const textSpans = Array.from(document.querySelectorAll("article span[dir='auto'], div[class*='_a9zs'] span"));
+                    for (let s of textSpans) {
+                        if (s.innerText && s.innerText.trim().length > 5) {
+                            return s.innerText.trim();
+                        }
+                    }
+
+                    // 3. Tenta qualquer elemento _a9zs
+                    const a9zs = document.querySelector("div[class*='_a9zs'], span[class*='_a9zs']");
+                    if (a9zs && a9zs.innerText.trim()) return a9zs.innerText.trim();
+
+                    return "";
+                }""")
+
+                # Verifica se há tag de vídeo
                 video_elem = page.query_selector("video")
                 if video_elem:
                     is_video = True
@@ -208,7 +225,7 @@ def main():
                     "type": "image",
                     "url": post_url,
                     "media_file": output_filename,
-                    "caption": caption if caption else "CME Mobi - Conectando você ao futuro da mobilidade.",
+                    "caption": caption if caption else "CME Mobi - Mobilidade elétrica e sustentável.",
                     "updated_at": time.strftime("%d/%m/%Y às %H:%M")
                 })
 
@@ -222,7 +239,7 @@ def main():
     if os.path.exists(cookie_file):
         os.remove(cookie_file)
 
-    print("\n✅ Concluído! 12 posts de CME Mobi organizados com sucesso.")
+    print("\n✅ Concluído! 12 posts de CME Mobi organizados com legendas completas.")
 
 if __name__ == "__main__":
     main()
