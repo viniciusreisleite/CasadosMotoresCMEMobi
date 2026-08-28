@@ -1,0 +1,63 @@
+name: Sincronizar Instagram - CME Mobi
+
+on:
+  schedule:
+    - cron: '0 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar FFmpeg, dependências e Navegador
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          pip install playwright yt-dlp
+          playwright install chromium --with-deps
+
+      - name: Baixar os 12 posts (vídeos e imagens)
+        env:
+          INSTAGRAM_COOKIES: ${{ secrets.INSTAGRAM_COOKIES }}
+        run: |
+          python sync_instagram.py
+
+      - name: Salvar arquivos no Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          rm -f cookies.txt
+          
+          git add -A
+          
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "Atualizados os 12 posts do CME Mobi [skip ci]"
+            git push origin main
+          fi
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Enviar arquivos para o Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Publicar Painel na Web
+        uses: actions/deploy-pages@v4
