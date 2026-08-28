@@ -118,30 +118,35 @@ def main():
 
             try:
                 page.goto(post_url, wait_until="domcontentloaded", timeout=30000)
-                time.sleep(4)
+                time.sleep(5) # Aguarda renderização completa do post
 
-                # Extrator avançado de legenda no Instagram
+                # Extrator ultra robusto de legendas do Instagram
                 caption = page.evaluate("""() => {
-                    // 1. Tenta tag h1 principal
+                    // Tenta encontrar o bloco de texto principal da publicação
                     const h1 = document.querySelector("h1");
-                    if (h1 && h1.innerText.trim()) return h1.innerText.trim();
+                    if (h1 && h1.innerText && h1.innerText.trim().length > 3) {
+                        return h1.innerText.trim();
+                    }
 
-                    // 2. Tenta span com texto do post
-                    const textSpans = Array.from(document.querySelectorAll("article span[dir='auto'], div[class*='_a9zs'] span"));
-                    for (let s of textSpans) {
-                        if (s.innerText && s.innerText.trim().length > 5) {
-                            return s.innerText.trim();
+                    // Varre spans dentro do article
+                    const spans = document.querySelectorAll("article span[dir='auto'], div[class*='_a9zs'] span");
+                    for (let s of spans) {
+                        const t = s.innerText ? s.innerText.trim() : "";
+                        if (t.length > 3 && !t.includes("Curtido por") && !t.includes("comentários")) {
+                            return t;
                         }
                     }
 
-                    // 3. Tenta qualquer elemento _a9zs
-                    const a9zs = document.querySelector("div[class*='_a9zs'], span[class*='_a9zs']");
-                    if (a9zs && a9zs.innerText.trim()) return a9zs.innerText.trim();
+                    // Varre blocos de texto gerais na página do post
+                    const textDivs = document.querySelectorAll("div[class*='_a9zs']");
+                    for (let d of textDivs) {
+                        const t = d.innerText ? d.innerText.trim() : "";
+                        if (t.length > 3) return t;
+                    }
 
                     return "";
                 }""")
 
-                # Verifica se há tag de vídeo
                 video_elem = page.query_selector("video")
                 if video_elem:
                     is_video = True
