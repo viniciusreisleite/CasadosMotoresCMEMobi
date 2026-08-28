@@ -3,6 +3,7 @@ import glob
 import json
 import subprocess
 import time
+import re
 import urllib.request
 from playwright.sync_api import sync_playwright
 
@@ -15,6 +16,16 @@ def cleanup_old_media(allowed_files):
                 print(f"🗑️ Mídia antiga removida: {file_path}")
             except Exception as e:
                 print(f"Erro ao remover {file_path}: {e}")
+
+def extract_caption_from_meta(meta_text):
+    """Extrai a legenda limpa de dentro da meta tag do Instagram"""
+    if not meta_text:
+        return ""
+    # Tenta pegar o texto entre aspas que o Instagram coloca nas meta tags
+    match = re.search(r'["“](.+?)["”]', meta_text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    return meta_text.strip()
 
 def main():
     cookies_raw = os.environ.get("INSTAGRAM_COOKIES", "")
@@ -118,34 +129,33 @@ def main():
 
             try:
                 page.goto(post_url, wait_until="domcontentloaded", timeout=30000)
-                time.sleep(5) # Aguarda renderização completa do post
+                time.sleep(3)
 
-                # Extrator ultra robusto de legendas do Instagram
-                caption = page.evaluate("""() => {
-                    // Tenta encontrar o bloco de texto principal da publicação
-                    const h1 = document.querySelector("h1");
-                    if (h1 && h1.innerText && h1.innerText.trim().length > 3) {
-                        return h1.innerText.trim();
-                    }
+                # 1. Extração Infalível via Meta Tags do HTML do Instagram
+                meta_data = page.evaluate("""() => {
+                    const ogDesc = document.querySelector("meta[property='og:description']")?.getAttribute('content') || "";
+                    const ogTitle = document.querySelector("meta[property='og:title']")?.getAttribute('content') || "";
+                    const desc = document.querySelector("meta[name='description']")?.getAttribute('content') || "";
+                    
+                    // Seletor DOM direto
+                    const h1 = document.querySelector("h1")?.innerText || "";
+                    const spanText = document.querySelector("article span[dir='auto'], div[class*='_a9zs'] span")?.innerText || "";
 
-                    // Varre spans dentro do article
-                    const spans = document.querySelectorAll("article span[dir='auto'], div[class*='_a9zs'] span");
-                    for (let s of spans) {
-                        const t = s.innerText ? s.innerText.trim() : "";
-                        if (t.length > 3 && !t.includes("Curtido por") && !t.includes("comentários")) {
-                            return t;
-                        }
-                    }
-
-                    // Varre blocos de texto gerais na página do post
-                    const textDivs = document.querySelectorAll("div[class*='_a9zs']");
-                    for (let d of textDivs) {
-                        const t = d.innerText ? d.innerText.trim() : "";
-                        if (t.length > 3) return t;
-                    }
-
-                    return "";
+                    return { ogDesc, ogTitle, desc, h1, spanText };
                 }""")
+
+                # Prioriza a meta tag de descrição (onde fica o texto completo entre aspas)
+                raw_meta = meta_data.get('ogDesc') or meta_data.get('desc') or meta_data.get('ogTitle') or ""
+                extracted = extract_caption_from_meta(raw_meta)
+
+                if extracted and len(extracted) > 3:
+                    caption = extracted
+                elif meta_data.get('h1'):
+                    caption = meta_data['h1'].strip()
+                elif meta_data.get('spanText'):
+                    caption = meta_data['spanText'].strip()
+
+                print(f"📝 Legenda capturada ({len(caption)} caracteres): {caption[:60]}...")
 
                 video_elem = page.query_selector("video")
                 if video_elem:
@@ -244,7 +254,7 @@ def main():
     if os.path.exists(cookie_file):
         os.remove(cookie_file)
 
-    print("\n✅ Concluído! 12 posts de CME Mobi organizados com legendas completas.")
+    print("\n✅ Concluído! 12 posts de CME Mobi organizados com legendas completas extraídas.")
 
 if __name__ == "__main__":
     main()
