@@ -12,8 +12,8 @@
       padding: 0;
     }
     body {
-      background: radial-gradient(circle at top right, #0f172a, #020617, #000000);
-      color: #ffffff;
+      background: radial-gradient(circle at top right, #fde047, #eab308, #ca8a04);
+      color: #000000;
       font-family: 'Montserrat', sans-serif;
       width: 100vw;
       height: 100vh;
@@ -28,19 +28,19 @@
       gap: 2.5vw;
     }
 
-    /* Coluna de Mídia (Vídeo ou Foto) */
+    /* Coluna de Mídia */
     .media-section {
       flex: 0 0 35%;
       height: 100%;
       background: #000000;
       border-radius: 26px;
       overflow: hidden;
-      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.9);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
-      border: 2px solid rgba(14, 165, 233, 0.4);
+      border: 3px solid #ffffff;
     }
     
     #player, #image-display {
@@ -55,29 +55,30 @@
       left: 0;
       width: 100%;
       height: 8px;
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(0, 0, 0, 0.25);
       z-index: 5;
     }
     .progress-bar {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, #0284c7, #38bdf8, #7dd3fc);
+      background: linear-gradient(90deg, #09090b, #18181b);
       transition: width 0.1s linear;
     }
 
-    /* Coluna Informativa */
+    /* Coluna Informativa com Fundo Translúcido e Textos em Preto */
     .info-section {
       flex: 1;
       height: 100%;
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(18px);
-      border: 1px solid rgba(14, 165, 233, 0.25);
+      border: 2px solid rgba(0, 0, 0, 0.15);
       border-radius: 26px;
       padding: 3.5vh 3vw;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       overflow: hidden;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
     }
 
     /* Cabeçalho */
@@ -87,15 +88,15 @@
       align-items: center;
       gap: 25px;
       padding-bottom: 2vh;
-      border-bottom: 1px solid rgba(14, 165, 233, 0.2);
+      border-bottom: 2px solid rgba(0, 0, 0, 0.1);
     }
     .header-text {
       flex: 1;
     }
     .badge {
       display: inline-block;
-      background: linear-gradient(135deg, #0284c7, #0ea5e9);
-      color: #ffffff;
+      background: #09090b;
+      color: #fde047;
       font-size: clamp(0.75rem, 1vw, 1.05rem);
       font-weight: 800;
       text-transform: uppercase;
@@ -103,27 +104,28 @@
       padding: 6px 18px;
       border-radius: 50px;
       margin-bottom: 1vh;
-      box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
     }
     .header h1 {
       font-size: clamp(1.4rem, 2.2vw, 2.6rem);
       font-weight: 900;
       line-height: 1.2;
-      color: #ffffff;
+      color: #09090b;
       letter-spacing: -0.5px;
+      text-transform: uppercase;
     }
     .header h1 span {
-      color: #38bdf8;
+      color: #ca8a04;
     }
 
     .logo-img {
       height: clamp(85px, 14vh, 140px);
       max-width: 260px;
       object-fit: contain;
-      filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.8));
+      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
     }
 
-    /* Área de Legenda Auto-Ajustável */
+    /* Área de Legenda em Preto com Tipografia Dinâmica */
     .caption-container {
       flex: 1;
       margin-top: 2vh;
@@ -136,11 +138,11 @@
     }
     .caption-box {
       width: 100%;
-      color: #ffffff;
+      color: #000000;
       white-space: pre-line;
       word-break: break-word;
       line-height: 1.45;
-      font-weight: 500;
+      font-weight: 600;
     }
   </style>
 </head>
