@@ -128,23 +128,37 @@
     /* Área de Legenda em Preto com Tipografia Dinâmica */
     
     
-      /* Motor de auto-scroll TV */
+      
+    video, #image-player {
+      background: #000 !important;
+      background-color: #000 !important;
+    }
+      .header-text h1, .header h1 {
+      text-transform: uppercase !important;
+}
+      /* Motor TV Standard 2026 */
+    .header-text h1, .header h1 {
+      text-transform: uppercase !important;
+    }
+    .header-text h1 span, .header h1 span {
+      text-transform: uppercase !important;
+    }
     .info-section {
-      display: flex !important;
-      flex-direction: column !important;
       height: 100vh !important;
       max-height: 100vh !important;
+      display: flex !important;
+      flex-direction: column !important;
       overflow: hidden !important;
       box-sizing: border-box !important;
     }
     .caption-container {
       flex: 1 1 auto !important;
       height: 0 !important;
+      margin-top: 2rem !important;
       overflow-y: scroll !important;
       scrollbar-width: none !important;
       -ms-overflow-style: none !important;
       position: relative !important;
-      margin-top: 1.5rem !important;
     }
     .caption-container::-webkit-scrollbar {
       display: none !important;
@@ -153,6 +167,7 @@
       font-size: 2.7vw !important;
       line-height: 1.4 !important;
       font-weight: 600 !important;
+      color: #222 !important;
       word-wrap: break-word !important;
       white-space: pre-line !important;
       padding-bottom: 6rem !important;
@@ -161,9 +176,6 @@
       background: #000 !important;
       background-color: #000 !important;
     }
-      .header-text h1, .header h1 {
-      text-transform: uppercase !important;
-}
   </style>
 </head>
 <body>
@@ -197,7 +209,7 @@
     </div>
   </div>
 
-    <script>
+      <script>
     function iniciarAutoScroll(container) {
       if (!container) return;
       if (window.__scrollInterval) clearInterval(window.__scrollInterval);
@@ -205,23 +217,23 @@
 
       container.scrollTop = 0;
 
-      window.__scrollTimer = setTimeout(() => {
-        const diferenca = container.scrollHeight - container.clientHeight;
+      window.__scrollTimer = setTimeout(function() {
+        var diferenca = container.scrollHeight - container.clientHeight;
         if (diferenca > 15) {
-          let descendo = true;
-          let pausado = false;
+          var descendo = true;
+          var pausado = false;
 
-          window.__scrollInterval = setInterval(() => {
+          window.__scrollInterval = setInterval(function() {
             if (pausado) return;
 
             if (descendo) {
               container.scrollTop += 1;
               if (container.scrollTop >= diferenca) {
                 pausado = true;
-                setTimeout(() => {
+                setTimeout(function() {
                   descendo = false;
                   pausado = false;
-                }, 3000); // 3s no fim da leitura
+                }, 3000);
               }
             } else {
               container.scrollTop -= 3;
@@ -229,9 +241,9 @@
                 container.scrollTop = 0;
                 descendo = true;
                 pausado = true;
-                setTimeout(() => {
+                setTimeout(function() {
                   pausado = false;
-                }, 3500); // 3.5s no topo antes de novo ciclo
+                }, 3500);
               }
             }
           }, 35);
@@ -239,74 +251,80 @@
       }, 2500);
     }
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      const containerElem = document.getElementById('caption-container');
-      const captionElem = document.getElementById('caption-text');
-      const player = document.getElementById('player');
-      const videoSource = document.getElementById('video-source');
-      const imagePlayer = document.getElementById('image-player');
+    document.addEventListener('DOMContentLoaded', function() {
+      var containerElem = document.getElementById('caption-container');
+      var captionElem = document.getElementById('caption-text');
+      var player = document.getElementById('player');
+      var videoSource = document.getElementById('video-source');
+      var imagePlayer = document.getElementById('image-player');
 
-      const timestamp = Date.now();
-      let posts = [];
+      var ts = new Date().getTime();
 
-      try {
-        const response = await fetch(./data.json?t= + timestamp);
-        if (!response.ok) throw new Error(HTTP  + response.status);
-        posts = await response.json();
-      } catch (err) {
-        console.error("Erro ao carregar data.json:", err);
-      }
+      fetch('data.json?v=' + ts)
+        .then(function(res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(function(posts) {
+          if (!Array.isArray(posts) || posts.length === 0) {
+            if (captionElem) captionElem.textContent = 'Nenhuma publicação encontrada.';
+            return;
+          }
 
-      if (!Array.isArray(posts) || posts.length === 0) {
-        if (captionElem) captionElem.textContent = "Não foi possível carregar as informações.";
-        return;
-      }
+          var urlParams = new URLSearchParams(window.location.search);
+          var postParam = urlParams.get('post');
+          var postIdx = parseInt(postParam, 10);
 
-      const urlParams = new URLSearchParams(window.location.search);
-      const postParam = urlParams.get('post');
-      const postIdx = parseInt(postParam, 10);
+          var currentPost = posts[0];
+          if (!isNaN(postIdx)) {
+            var encontrado = posts.filter(function(p) {
+              return p.id === postIdx || String(p.id) === String(postIdx);
+            });
+            currentPost = (encontrado.length > 0) ? encontrado[0] : (posts[postIdx - 1] || posts[0]);
+          }
 
-      let currentPost = posts[0];
-      if (!isNaN(postIdx)) {
-        currentPost = posts.find(p => p.id === postIdx || String(p.id) === String(postIdx)) || posts[postIdx - 1] || posts[0];
-      }
+          var texto = currentPost.caption || currentPost.text || '';
+          texto = texto.replace(/\n{3,}/g, '\n\n').trim();
 
-      let texto = currentPost.caption || currentPost.text || '';
-      texto = texto.replace(/\n{3,}/g, '\n\n').trim();
-      if (captionElem) {
-        captionElem.textContent = texto;
-        iniciarAutoScroll(containerElem);
-      }
+          if (captionElem) {
+            captionElem.textContent = texto;
+            iniciarAutoScroll(containerElem);
+          }
 
-      const midiaArquivo = currentPost.media || currentPost.media_file || currentPost.video_file;
-      const isFoto = currentPost.type === 'image' || (midiaArquivo && (midiaArquivo.endsWith('.jpg') || midiaArquivo.endsWith('.png')));
+          var midiaArquivo = currentPost.media || currentPost.media_file || currentPost.video_file;
+          var isFoto = currentPost.type === 'image' || (midiaArquivo && (midiaArquivo.indexOf('.jpg') !== -1 || midiaArquivo.indexOf('.png') !== -1));
 
-      if (isFoto) {
-        if (player) {
-          player.pause();
-          player.style.display = 'none';
-        }
-        if (imagePlayer) {
-          imagePlayer.style.display = 'block';
-          imagePlayer.src = ./ + midiaArquivo + ?t= + timestamp;
-        }
-      } else {
-        if (imagePlayer) imagePlayer.style.display = 'none';
-        if (player && videoSource) {
-          player.style.display = 'block';
-          player.style.backgroundColor = '#000';
-          player.loop = true;
+          if (isFoto) {
+            if (player) {
+              player.pause();
+              player.style.display = 'none';
+            }
+            if (imagePlayer) {
+              imagePlayer.style.display = 'block';
+              imagePlayer.src = midiaArquivo + '?v=' + ts;
+            }
+          } else {
+            if (imagePlayer) imagePlayer.style.display = 'none';
+            if (player && videoSource) {
+              player.style.display = 'block';
+              player.style.backgroundColor = '#000';
+              player.loop = true;
 
-          player.onended = () => {
-            player.currentTime = 0;
-            player.play().catch(() => {});
-          };
+              player.onended = function() {
+                player.currentTime = 0;
+                player.play().catch(function() {});
+              };
 
-          videoSource.src = ./ + midiaArquivo + ?t= + timestamp;
-          player.load();
-          player.play().catch(e => console.log('Autoplay:', e));
-        }
-      }
+              videoSource.src = midiaArquivo + '?v=' + ts;
+              player.load();
+              player.play().catch(function(e) { console.log('Autoplay:', e); });
+            }
+          }
+        })
+        .catch(function(err) {
+          console.error('Erro ao carregar dados:', err);
+          if (captionElem) captionElem.textContent = 'Erro ao carregar dados do mural.';
+        });
     });
   </script>
 </body>
