@@ -126,23 +126,40 @@
     }
 
     /* Área de Legenda em Preto com Tipografia Dinâmica */
+    
+    
+      /* Motor de auto-scroll TV */
+    .info-section {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 100vh !important;
+      max-height: 100vh !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+    }
     .caption-container {
-      flex: 1;
-      margin-top: 2vh;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      width: 100%;
-      height: 100%;
+      flex: 1 1 auto !important;
+      height: 0 !important;
+      overflow-y: scroll !important;
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+      position: relative !important;
+      margin-top: 1.5rem !important;
+    }
+    .caption-container::-webkit-scrollbar {
+      display: none !important;
     }
     .caption-box {
-      width: 100%;
-      color: #000000;
-      white-space: pre-line;
-      word-break: break-word;
-      line-height: 1.45;
-      font-weight: 600;
+      font-size: 2.2vw !important;
+      line-height: 1.45 !important;
+      font-weight: 600 !important;
+      word-wrap: break-word !important;
+      white-space: pre-line !important;
+      padding-bottom: 6rem !important;
+    }
+    video, #image-player {
+      background: #000 !important;
+      background-color: #000 !important;
     }
   </style>
 </head>
@@ -177,78 +194,115 @@
     </div>
   </div>
 
-  <script>
-    function ajustarFonteTexto(container, elemento) {
-      let fontSize = window.innerHeight * 0.024;
-      const minFontSize = window.innerHeight * 0.013;
-      elemento.style.fontSize = `${fontSize}px`;
-      elemento.style.lineHeight = '1.45';
+    <script>
+    function iniciarAutoScroll(container) {
+      if (!container) return;
+      if (window.__scrollInterval) clearInterval(window.__scrollInterval);
+      if (window.__scrollTimer) clearTimeout(window.__scrollTimer);
 
-      while (elemento.scrollHeight > container.clientHeight && fontSize > minFontSize) {
-        fontSize -= 0.5;
-        elemento.style.fontSize = `${fontSize}px`;
-      }
+      container.scrollTop = 0;
 
-      if (elemento.scrollHeight > container.clientHeight) {
-        elemento.style.lineHeight = '1.3';
-      }
+      window.__scrollTimer = setTimeout(() => {
+        const diferenca = container.scrollHeight - container.clientHeight;
+        if (diferenca > 15) {
+          let descendo = true;
+          let pausado = false;
+
+          window.__scrollInterval = setInterval(() => {
+            if (pausado) return;
+
+            if (descendo) {
+              container.scrollTop += 1;
+              if (container.scrollTop >= diferenca) {
+                pausado = true;
+                setTimeout(() => {
+                  descendo = false;
+                  pausado = false;
+                }, 3000); // 3s no fim da leitura
+              }
+            } else {
+              container.scrollTop -= 3;
+              if (container.scrollTop <= 0) {
+                container.scrollTop = 0;
+                descendo = true;
+                pausado = true;
+                setTimeout(() => {
+                  pausado = false;
+                }, 3500); // 3.5s no topo antes de novo ciclo
+              }
+            }
+          }, 35);
+        }
+      }, 2500);
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
-      const timestamp = Date.now();
-      const containerElem = document.getElementById('caption-container') || document.querySelector('.caption-container');
-      const captionElem = document.getElementById('caption-text') || document.querySelector('.caption-text');
+      const containerElem = document.getElementById('caption-container');
+      const captionElem = document.getElementById('caption-text');
       const player = document.getElementById('player');
       const videoSource = document.getElementById('video-source');
       const imagePlayer = document.getElementById('image-player');
 
+      const timestamp = Date.now();
+      let posts = [];
+
       try {
-        const response = await fetch(`data.json?t=${timestamp}`);
-        const posts = await response.json();
-        if (!Array.isArray(posts) || posts.length === 0) return;
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const postParam = urlParams.get('post');
-        const postIdx = parseInt(postParam, 10);
-
-        let currentPost = posts[0];
-        if (!isNaN(postIdx)) {
-          currentPost = posts.find(p => p.id === postIdx || String(p.id) === String(postIdx)) || posts[postIdx - 1] || posts[0];
-        }
-
-        let texto = currentPost.caption || currentPost.text || '';
-        texto = texto.replace(/\n{3,}/g, '\n\n').trim();
-        if (captionElem) {
-          captionElem.textContent = texto;
-          if (containerElem) {
-            ajustarFonteTexto(containerElem, captionElem);
-            window.addEventListener('resize', () => ajustarFonteTexto(containerElem, captionElem));
-          }
-        }
-
-        const midiaArquivo = currentPost.media || currentPost.media_file || currentPost.video_file;
-        const isFoto = currentPost.type === 'image' || (midiaArquivo && (midiaArquivo.endsWith('.jpg') || midiaArquivo.endsWith('.png')));
-
-        if (isFoto) {
-          if (player) {
-            player.pause();
-            player.style.display = 'none';
-          }
-          if (imagePlayer) {
-            imagePlayer.style.display = 'block';
-            imagePlayer.src = `${midiaArquivo}?t=${timestamp}`;
-          }
-        } else {
-          if (imagePlayer) imagePlayer.style.display = 'none';
-          if (player && videoSource) {
-            player.style.display = 'block';
-            videoSource.src = `${midiaArquivo}?t=${timestamp}`;
-            player.load();
-            player.play().catch(e => console.log('Autoplay:', e));
-          }
-        }
+        const response = await fetch(./data.json?t= + timestamp);
+        if (!response.ok) throw new Error(HTTP  + response.status);
+        posts = await response.json();
       } catch (err) {
-        console.error(err);
+        console.error("Erro ao carregar data.json:", err);
+      }
+
+      if (!Array.isArray(posts) || posts.length === 0) {
+        if (captionElem) captionElem.textContent = "Não foi possível carregar as informações.";
+        return;
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const postParam = urlParams.get('post');
+      const postIdx = parseInt(postParam, 10);
+
+      let currentPost = posts[0];
+      if (!isNaN(postIdx)) {
+        currentPost = posts.find(p => p.id === postIdx || String(p.id) === String(postIdx)) || posts[postIdx - 1] || posts[0];
+      }
+
+      let texto = currentPost.caption || currentPost.text || '';
+      texto = texto.replace(/\n{3,}/g, '\n\n').trim();
+      if (captionElem) {
+        captionElem.textContent = texto;
+        iniciarAutoScroll(containerElem);
+      }
+
+      const midiaArquivo = currentPost.media || currentPost.media_file || currentPost.video_file;
+      const isFoto = currentPost.type === 'image' || (midiaArquivo && (midiaArquivo.endsWith('.jpg') || midiaArquivo.endsWith('.png')));
+
+      if (isFoto) {
+        if (player) {
+          player.pause();
+          player.style.display = 'none';
+        }
+        if (imagePlayer) {
+          imagePlayer.style.display = 'block';
+          imagePlayer.src = ./ + midiaArquivo + ?t= + timestamp;
+        }
+      } else {
+        if (imagePlayer) imagePlayer.style.display = 'none';
+        if (player && videoSource) {
+          player.style.display = 'block';
+          player.style.backgroundColor = '#000';
+          player.loop = true;
+
+          player.onended = () => {
+            player.currentTime = 0;
+            player.play().catch(() => {});
+          };
+
+          videoSource.src = ./ + midiaArquivo + ?t= + timestamp;
+          player.load();
+          player.play().catch(e => console.log('Autoplay:', e));
+        }
       }
     });
   </script>
