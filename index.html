@@ -188,7 +188,7 @@
       background: #000 !important;
       background-color: #000 !important;
     }
-          /* Encaixe Profissional 9:16 - Estilo Prefeitura */
+              /* === Layout Adaptativo Dinamico === */
     .tv-container {
       display: flex !important;
       width: 100vw !important;
@@ -198,29 +198,56 @@
       box-sizing: border-box !important;
     }
     .video-section {
-      flex: 0 0 auto !important;
-      width: auto !important;
       height: 100% !important;
-      aspect-ratio: 9 / 16 !important;
       background: #000 !important;
       border-radius: 24px !important;
       overflow: hidden !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7) !important;
       border: 1px solid rgba(255, 255, 255, 0.1) !important;
       position: relative !important;
     }
-    video, #image-player {
+    /* QUANDO FOR VIDEO */
+    .tv-container.is-video .video-section {
+      flex: 0 0 auto !important;
+      aspect-ratio: 9 / 16 !important;
+    }
+    .tv-container.is-video video {
       width: 100% !important;
       height: 100% !important;
       object-fit: cover !important;
       border-radius: 24px !important;
       display: block !important;
     }
+    /* QUANDO FOR IMAGEM */
+    .tv-container.is-image .video-section {
+      flex: 0 0 auto !important;
+      max-width: 45vw !important;
+      background: #050505 !important;
+    }
+    .tv-container.is-image #image-player {
+      width: auto !important;
+      max-width: 100% !important;
+      height: 100% !important;
+      object-fit: contain !important;
+      border-radius: 20px !important;
+      display: block !important;
+    }
+    .info-section {
+      flex: 1 !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      border-radius: 24px !important;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+      overflow: hidden !important;
+    }
   </style>
 </head>
 <body>
 
-  <div class="tv-container">
+  <div class="tv-container is-video" id="main-container">
     <!-- Coluna de Mídia -->
     <div class="media-section">
       <img id="image-player" style="display:none; width:100%; height:100%; object-fit:contain; background-color:#050505;" /><video id="player" autoplay playsinline muted loop preload="auto" style="width:100%; height:100%; object-fit:contain; background-color:#050505;"><source id="video-source" src="" type="video/mp4"></video>
@@ -249,7 +276,7 @@
     </div>
   </div>
 
-        <script>
+          <script>
     function iniciarAutoScroll(container) {
       if (!container) return;
       if (window.__scrollInterval) clearInterval(window.__scrollInterval);
@@ -292,6 +319,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+      var mainContainer = document.getElementById('main-container') || document.querySelector('.tv-container');
       var containerElem = document.getElementById('caption-container');
       var captionElem = document.getElementById('caption-text') || containerElem;
       var player = document.getElementById('player');
@@ -335,6 +363,10 @@
           var isFoto = currentPost.type === 'image' || (midiaArquivo && (midiaArquivo.indexOf('.jpg') !== -1 || midiaArquivo.indexOf('.png') !== -1));
 
           if (isFoto) {
+            if (mainContainer) {
+              mainContainer.classList.remove('is-video');
+              mainContainer.classList.add('is-image');
+            }
             if (player) {
               player.pause();
               player.style.display = 'none';
@@ -344,6 +376,10 @@
               imagePlayer.src = midiaArquivo + '?v=' + ts;
             }
           } else {
+            if (mainContainer) {
+              mainContainer.classList.remove('is-image');
+              mainContainer.classList.add('is-video');
+            }
             if (imagePlayer) imagePlayer.style.display = 'none';
             if (player && videoSource) {
               player.style.display = 'block';
