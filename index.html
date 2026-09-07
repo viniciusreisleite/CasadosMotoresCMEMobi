@@ -188,55 +188,7 @@
       background: #000 !important;
       background-color: #000 !important;
     }
-      /* Padronizacao Universal de Midia e Layout */
-    .header-text h1, .header h1 {
-      text-transform: uppercase !important;
-    }
-    .video-section {
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      background: #000 !important;
-      background-color: #000 !important;
-    }
-    video {
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: contain !important;
-      background: #000 !important;
-      background-color: #000 !important;
-      display: block !important;
-    }
-    #image-player {
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: contain !important;
-      background: #000 !important;
-      background-color: #000 !important;
-      display: block !important;
-    }
-    .caption-container {
-      flex: 1 1 auto !important;
-      height: 0 !important;
-      margin-top: 2rem !important;
-      overflow-y: scroll !important;
-      scrollbar-width: none !important;
-      -ms-overflow-style: none !important;
-      position: relative !important;
-    }
-    .caption-container::-webkit-scrollbar {
-      display: none !important;
-    }
-    .caption-box {
-      font-size: 2.7vw !important;
-      line-height: 1.45 !important;
-      font-weight: 600 !important;
-      color: #ffffff !important;
-      word-wrap: break-word !important;
-      white-space: pre-line !important;
-      padding-bottom: 6rem !important;
-    }
-      /* Padronizacao Frame Card (Estilo Prefeitura) */
+          /* Encaixe Profissional 9:16 - Estilo Prefeitura */
     .tv-container {
       display: flex !important;
       width: 100vw !important;
@@ -244,49 +196,25 @@
       padding: 1.5rem !important;
       gap: 1.5rem !important;
       box-sizing: border-box !important;
-      overflow: hidden !important;
     }
     .video-section {
-      flex: 0 0 40% !important;
+      flex: 0 0 auto !important;
+      width: auto !important;
       height: 100% !important;
+      aspect-ratio: 9 / 16 !important;
       background: #000 !important;
-      background-color: #000 !important;
       border-radius: 24px !important;
       overflow: hidden !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5) !important;
-      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
       position: relative !important;
     }
-    video {
+    video, #image-player {
       width: 100% !important;
       height: 100% !important;
-      object-fit: contain !important;
-      background: #000 !important;
-      background-color: #000 !important;
-      border-radius: 20px !important;
-      display: block !important;
-    }
-    #image-player {
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: contain !important;
-      background: #000 !important;
-      background-color: #000 !important;
-      border-radius: 20px !important;
-      display: block !important;
-    }
-    .info-section {
-      flex: 1 !important;
-      height: 100% !important;
+      object-fit: cover !important;
       border-radius: 24px !important;
-      display: flex !important;
-      flex-direction: column !important;
-      overflow: hidden !important;
-      box-sizing: border-box !important;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35) !important;
+      display: block !important;
     }
   </style>
 </head>
