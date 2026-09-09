@@ -388,6 +388,16 @@
               player.defaultMuted = true;
               player.loop = true;
 
+              player.onloadedmetadata = function() {
+                if (player.videoWidth > player.videoHeight) {
+                  mainContainer.classList.remove('is-video');
+                  mainContainer.classList.add('is-image');
+                } else {
+                  mainContainer.classList.remove('is-image');
+                  mainContainer.classList.add('is-video');
+                }
+              };
+
               player.onended = function() {
                 player.currentTime = 0;
                 player.play().catch(function() {});
@@ -411,3 +421,4 @@
   </script>
 </body>
 </html>
+
