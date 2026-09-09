@@ -382,7 +382,7 @@
             iniciarAutoScroll(containerElem);
           }
 
-          var midiaArquivo = currentPost.media || currentPost.media_file || currentPost.video_file;
+          var midiaArquivo = currentPost.media || currentPost.media_file || currentPost.video_file || currentPost.arquivo || '';
           var isFoto = currentPost.type === 'image' || (midiaArquivo && (midiaArquivo.indexOf('.jpg') !== -1 || midiaArquivo.indexOf('.png') !== -1));
 
           if (isFoto) {
@@ -444,6 +444,7 @@
   </script>
 </body>
 </html>
+
 
 
 
