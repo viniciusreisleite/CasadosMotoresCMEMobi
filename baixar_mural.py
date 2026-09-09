@@ -5,10 +5,10 @@ import json
 import requests
 from playwright.sync_api import sync_playwright
 
-PERFIS = "cme.mobi"
-PERFIL = "cme.mobi"
-BADGE_TEXTO = "Casa dos Motores"
-COR_TEMA = "#f97316"
+PERFIS = ['cme.mobi']
+PERFIL = 'cme.mobi'
+BADGE_TEXTO = 'Casa dos Motores'
+COR_TEMA = '#f97316'
 TOTAL_MIDIAS = 12
 COOKIES_FILE = "cookies.txt"
 
@@ -85,36 +85,49 @@ def main():
         
         urls = []
         for pf in PERFIS:
+            print(f"\nChecando feed de @{pf}...")
             try:
                 page.goto(f"https://www.instagram.com/{pf}/", wait_until="domcontentloaded", timeout=60000)
-                page.wait_for_timeout(2500)
+                page.wait_for_timeout(3000)
                 for _ in range(25):
                     anchors = page.query_selector_all('a[href*="/p/"], a[href*="/reel/"]')
                     for a in anchors:
                         h = a.get_attribute("href")
                         if h:
-                            clean = "https://www.instagram.com/" + h.split("?")[0].strip("/") + "/"
-                            if clean not in urls: urls.append(clean)
+                            caminho = h.split("?")[0].strip("/")
+                            clean = f"https://www.instagram.com/{caminho}/"
+                            if clean not in urls:
+                                urls.append((clean, pf))
                     if len(urls) >= 15: break
                     page.evaluate("window.scrollBy(0, 1500)")
                     page.wait_for_timeout(1000)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"Erro ao abrir perfil {pf}: {e}")
                 
         posts_a_manter = []
-        for url in urls:
+        for url, post_perfil in urls:
             raw_sc = url.strip("/").split("/")[-1]
             sc = raw_sc[:11] if len(raw_sc) > 11 and "_" not in raw_sc else raw_sc
             out_prefix = f"temp_{sc}"
             
+            caption = ""
+            try:
+                page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                page.wait_for_timeout(1000)
+                meta_tag = page.query_selector('meta[property="og:title"]')
+                if meta_tag: caption = meta_tag.get_attribute("content") or ""
+            except Exception:
+                pass
+
             tipo, arquivo = baixar_midia_por_tipo(sc, out_prefix, cookies_dict)
             if arquivo and os.path.exists(arquivo):
                 posts_a_manter.append({
-                    "id": sc, "url": url, "caption": "", "tipo": tipo,
+                    "id": sc, "url": url, "caption": caption, "tipo": tipo,
                     "arquivo": arquivo, "media": arquivo, "media_file": arquivo,
                     "video_file": arquivo, "imagem": arquivo,
-                    "badge": BADGE_TEXTO, "cor": COR_TEMA, "perfil": PERFIS[0]
+                    "badge": BADGE_TEXTO, "cor": COR_TEMA, "perfil": post_perfil
                 })
+                print(f"  [OK] Post {sc} ({tipo}) baixado de @{post_perfil}")
                 if len(posts_a_manter) >= TOTAL_MIDIAS: break
         browser.close()
 
