@@ -186,7 +186,7 @@ def processar_mural():
                         "url": url,
                         "caption": caption,
                         "tipo": tipo,
-                        "arquivo": arquivo_final,
+                        "arquivo": arquivo_final, "media": arquivo_final, "media_file": arquivo_final, "video_file": arquivo_final, "imagem": arquivo_final,
                         "badge": badge,
                         "cor": cor,
                         "perfil": usr
