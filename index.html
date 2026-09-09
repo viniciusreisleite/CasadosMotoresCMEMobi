@@ -212,9 +212,11 @@
     /* QUANDO FOR VIDEO */
     .tv-container.is-video .video-section {
       flex: 0 0 auto !important;
-      aspect-ratio: 9 / 16 !important;
+      aspect-ratio: auto !important; width: auto !important;
     }
     .tv-container.is-video video {
+      width: auto !important;
+      max-width: 50vw !important;
       width: 100% !important;
       height: 100% !important;
       object-fit: contain !important;
@@ -421,4 +423,5 @@
   </script>
 </body>
 </html>
+
 
