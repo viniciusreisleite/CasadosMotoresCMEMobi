@@ -1,235 +1,147 @@
-﻿import os, sys, json, time, re, shutil
+﻿
+import os
+import sys
+import time
+import json
 import requests
 from playwright.sync_api import sync_playwright
-import yt_dlp
 
-ACCOUNTS = [
-    {"username": "cme.mobi", "badge": "Casa dos Motores", "color": "#e11d48"}
-]
-
-TARGET_TOTAL = 12
-POSTS_PER_ACCOUNT = 12
-DATA_JSON = "data.json"
+TOTAL_MIDIAS = 12
 COOKIES_FILE = "cookies.txt"
 
-def carregar_cookies_playwright():
-    if not os.path.exists(COOKIES_FILE):
-        return []
-    cookies = []
-    with open(COOKIES_FILE, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            parts = line.split("\t")
-            if len(parts) >= 7:
-                domain, _, path, secure, expires, name, value = parts[:7]
-                cookies.append({
-                    "name": name,
-                    "value": value,
-                    "domain": domain,
-                    "path": path,
-                    "secure": secure.lower() == "true",
-                    "expires": float(expires) if expires.isdigit() else -1
-                })
-    return cookies
+def carregar_cookies():
+    cookies_dict = {}
+    if os.path.exists(COOKIES_FILE):
+        with open(COOKIES_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"): continue
+                p = line.split("\t")
+                if len(p) >= 7:
+                    cookies_dict[p[5]] = p[6]
+    return cookies_dict
 
-def extrair_shortcode(url):
-    m = re.search(r'/(?:p|reel|tv)/([^/?#&]+)', url)
-    return m.group(1) if m else url
+def shortcode_to_media_id(shortcode):
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+    media_id = 0
+    for letter in shortcode:
+        media_id = (media_id * 64) + alphabet.index(letter)
+    return str(media_id)
 
-def carregar_cache():
-    if os.path.exists(DATA_JSON):
-        try:
-            with open(DATA_JSON, "r", encoding="utf-8") as f:
-                dados = json.load(f)
-                cache = {}
-                for item in dados:
-                    url = item.get("url") or item.get("link", "")
-                    sc = extrair_shortcode(url)
-                    if sc:
-                        cache[sc] = item
-                return cache
-        except Exception:
-            return {}
-    return {}
-
-def baixar_imagem_hd(url, destino):
+def baixar_midia_por_tipo(shortcode, out_prefix, cookies_dict):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "X-IG-App-ID": "936619743392459",
+        "Accept": "*/*"
+    }
+    mid = shortcode_to_media_id(shortcode)
+    api_url = f"https://www.instagram.com/api/v1/media/{mid}/info/"
     try:
-        r = requests.get(url, timeout=15)
-        if r.status_code == 200:
-            with open(destino, "wb") as f:
-                f.write(r.content)
-            return True
+        r = requests.get(api_url, headers=headers, cookies=cookies_dict, timeout=15)
+        if r.status_code != 200:
+            return None, None
+        data = r.json()
+        items = data.get("items", [])
+        if not items: return None, None
+        item = items[0]
+        media_type = item.get("media_type")
+        if media_type == 8:
+            carousel = item.get("carousel_media", [])
+            if not carousel: return None, None
+            item = carousel[0]
+            media_type = item.get("media_type")
+        if media_type == 2:
+            videos = item.get("video_versions", [])
+            if videos:
+                arquivo = f"{out_prefix}.mp4"
+                res = requests.get(videos[0]["url"], timeout=30)
+                if res.status_code == 200:
+                    with open(arquivo, "wb") as f: f.write(res.content)
+                    return "video", arquivo
+        elif media_type == 1:
+            cands = item.get("image_versions2", {}).get("candidates", [])
+            if cands:
+                arquivo = f"{out_prefix}.jpg"
+                res = requests.get(cands[0]["url"], timeout=20)
+                if res.status_code == 200:
+                    with open(arquivo, "wb") as f: f.write(res.content)
+                    return "image", arquivo
     except Exception:
         pass
-    return False
+    return None, None
 
-def processar_mural():
-    cache_local = carregar_cache()
-    posts_a_manter = []
-    cookies_playwright = carregar_cookies_playwright()
-
-    print("=== INICIANDO SINCRONIZACAO (SESSAO AUTENTICADA) ===")
-
+def main():
+    cookies_dict = carregar_cookies()
+    cookies_playwright = [{"name": k, "value": v, "domain": ".instagram.com", "path": "/"} for k, v in cookies_dict.items()]
+    
     with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=True,
-            args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
-        )
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-            viewport={"width": 1920, "height": 1080}
-        )
-
-        if cookies_playwright:
-            context.add_cookies(cookies_playwright)
-
-        page = context.new_page()
-
-        for acc in ACCOUNTS:
-            usr = acc["username"]
-            badge = acc.get("badge", "")
-            cor = acc.get("color", "#ff1744")
-            print(f"\nChecando feed de @{usr}...")
-
-            page.goto(f"https://www.instagram.com/{usr}/", wait_until="domcontentloaded", timeout=60000)
-            page.wait_for_timeout(2000)
-            urls_encontradas = []
-
-            for _ in range(8):
-                anchors = page.query_selector_all('a[href*="/p/"], a[href*="/reel/"]')
-                for a in anchors:
-                    href = a.get_attribute("href")
-                    if href:
-                        clean = href.split("?")[0].strip("/")
-                        full = f"https://www.instagram.com/{clean}/"
-                        if full not in urls_encontradas:
-                            urls_encontradas.append(full)
-                if len(urls_encontradas) >= POSTS_PER_ACCOUNT:
-                    break
-                page.evaluate("window.scrollBy(0, 1000)")
-                page.wait_for_timeout(600)
-
-            candidatos = urls_encontradas[:POSTS_PER_ACCOUNT]
-            print(f"Posts no feed: {len(candidatos)} identificados.")
-
-            for url in candidatos:
-                sc = extrair_shortcode(url)
-
-                if sc in cache_local:
-                    item_cache = cache_local[sc]
-                    arquivo_salvo = item_cache.get("arquivo")
-                    if arquivo_salvo and os.path.exists(arquivo_salvo):
-                        print(f"  [CACHE OK] {sc} ({arquivo_salvo})")
-                        posts_a_manter.append(item_cache)
-                        continue
-
-                print(f"  [NOVO POST] Baixando: {url}")
-                page.goto(url, wait_until="domcontentloaded", timeout=60000)
+        browser = p.chromium.launch(headless=True)
+        ctx = browser.new_context(viewport={"width": 1920, "height": 1080})
+        if cookies_playwright: ctx.add_cookies(cookies_playwright)
+        page = ctx.new_page()
+        
+        urls = []
+        perfis = PERFIS if 'PERFIS' in globals() else [PERFIL]
+        for pf in perfis:
+            try:
+                page.goto(f"https://www.instagram.com/{pf}/", wait_until="domcontentloaded", timeout=60000)
+                page.wait_for_timeout(3000)
+                for _ in range(25):
+                    anchors = page.query_selector_all('a[href*="/p/"], a[href*="/reel/"]')
+                    for a in anchors:
+                        h = a.get_attribute("href")
+                        if h:
+                            clean = "https://www.instagram.com/" + h.split("?")[0].strip("/") + "/"
+                            if clean not in urls: urls.append(clean)
+                    if len(urls) >= 15: break
+                    page.evaluate("window.scrollBy(0, 1500)")
+                    page.wait_for_timeout(1000)
+            except Exception:
+                pass
+                
+        posts_a_manter = []
+        for url in urls:
+            raw_sc = url.strip("/").split("/")[-1]
+            sc = raw_sc[:11] if len(raw_sc) > 11 and "_" not in raw_sc else raw_sc
+            out_prefix = f"temp_{sc}"
+            
+            caption = ""
+            try:
+                page.goto(url, wait_until="domcontentloaded", timeout=30000)
                 page.wait_for_timeout(1000)
-
-                caption = ""
                 meta_tag = page.query_selector('meta[property="og:title"]')
-                if meta_tag:
-                    caption = meta_tag.get_attribute("content") or ""
+                if meta_tag: caption = meta_tag.get_attribute("content") or ""
+            except Exception:
+                pass
 
-                post_temp_id = f"temp_{sc}"
-                tipo = "image"
-                arquivo_final = f"{post_temp_id}.jpg"
-
-                video_elem = page.query_selector("article video, main video")
-                if video_elem:
-                    ydl_opts = {
-                        'outtmpl': f'{post_temp_id}.%(ext)s',
-                        'format': 'bestvideo+bestaudio/best',
-                        'socket_timeout': 15,
-                        'retries': 3,
-                        'fragment_retries': 3,
-                        'quiet': True
-                    }
-                    if os.path.exists(COOKIES_FILE):
-                        ydl_opts['cookiefile'] = COOKIES_FILE
-                    try:
-                        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                            ydl.download([url])
-                        for ext in [".mp4", ".mkv", ".webm"]:
-                            if os.path.exists(f"{post_temp_id}{ext}"):
-                                arquivo_final = f"{post_temp_id}{ext}"
-                                tipo = "video"
-                                break
-                    except Exception:
-                        tipo = "image"
-
-                if tipo != "video":
-                    img_url = None
-                    meta_img = page.query_selector('meta[property="og:image"]')
-                    if meta_img:
-                        img_url = meta_img.get_attribute("content")
-
-                    if not img_url:
-                        img = page.query_selector('article img[srcset], main img[srcset]')
-                        if img:
-                            srcset = img.get_attribute("srcset")
-                            if srcset:
-                                cand_img = [s.strip().split(" ")[0] for s in srcset.split(",")]
-                                img_url = cand_img[-1] if cand_img else None
-                            if not img_url:
-                                img_url = img.get_attribute("src")
-
-                    if img_url:
-                        baixar_imagem_hd(img_url, arquivo_final)
-
-                if os.path.exists(arquivo_final):
-                    posts_a_manter.append({
-                        "id": sc,
-                        "url": url,
-                        "caption": caption,
-                        "tipo": tipo,
-                        "arquivo": arquivo_final, "media": arquivo_final, "media_file": arquivo_final, "video_file": arquivo_final, "imagem": arquivo_final,
-                        "badge": badge,
-                        "cor": cor,
-                        "perfil": usr
-                    })
-
+            tipo, arquivo = baixar_midia_por_tipo(sc, out_prefix, cookies_dict)
+            if arquivo and os.path.exists(arquivo):
+                posts_a_manter.append({
+                    "id": sc, "url": url, "caption": caption, "tipo": tipo,
+                    "arquivo": arquivo, "media": arquivo, "media_file": arquivo,
+                    "video_file": arquivo, "imagem": arquivo,
+                    "badge": BADGE_TEXTO, "cor": COR_TEMA, "perfil": PERFIL if 'PERFIL' in globals() else perfis[0]
+                })
+                if len(posts_a_manter) >= TOTAL_MIDIAS: break
         browser.close()
 
-    if not posts_a_manter:
-        print("\nNenhum post localizado. Mantendo arquivos locais intactos!")
-        return
+    if len(posts_a_manter) < 6: return
 
-    posts_finais = posts_a_manter[:TARGET_TOTAL]
-    dados_json_novo = []
+    json_final = []
+    for idx, post in enumerate(posts_a_manter, 1):
+        ext = os.path.splitext(post["arquivo"])[1]
+        nome = f"media_{idx}{ext}"
+        if os.path.exists(post["arquivo"]):
+            if os.path.exists(nome) and nome != post["arquivo"]:
+                try: os.remove(nome)
+                except Exception: pass
+            try: os.rename(post["arquivo"], nome)
+            except Exception: pass
+        post["arquivo"] = post["media"] = post["media_file"] = post["video_file"] = post["imagem"] = nome
+        json_final.append(post)
 
-    print("\nOrganizando arquivos de 1 a 12...")
-    arquivos_preservados = set()
-
-    for idx, item in enumerate(posts_finais, start=1):
-        ext = os.path.splitext(item["arquivo"])[1]
-        nome_slot = f"media_{idx}{ext}"
-
-        origem = item["arquivo"]
-        if origem != nome_slot:
-            if os.path.exists(nome_slot):
-                os.remove(nome_slot)
-            shutil.move(origem, nome_slot)
-            item["arquivo"] = nome_slot
-
-        arquivos_preservados.add(nome_slot)
-        dados_json_novo.append(item)
-
-    for arq in os.listdir("."):
-        if (arq.startswith("media_") or arq.startswith("temp_")) and (arq.endswith(".jpg") or arq.endswith(".mp4") or arq.endswith(".png")):
-            if arq not in arquivos_preservados:
-                try:
-                    os.remove(arq)
-                except Exception:
-                    pass
-
-    with open(DATA_JSON, "w", encoding="utf-8") as f:
-        json.dump(dados_json_novo, f, indent=2, ensure_ascii=False)
-
-    print(f"Concluido! {len(dados_json_novo)} midias prontas e data.json atualizado.")
+    with open("data.json", "w", encoding="utf-8") as f:
+        json.dump(json_final, f, indent=2, ensure_ascii=False)
 
 if __name__ == "__main__":
-    processar_mural()
+    main()
