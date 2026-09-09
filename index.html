@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mural Digital - CME Mobi</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Mural Digital - Prefeitura de São Lourenço</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * {
       box-sizing: border-box;
@@ -12,8 +15,8 @@
       padding: 0;
     }
     body {
-      background: radial-gradient(circle at top right, #fde047, #eab308, #ca8a04);
-      color: #000000;
+      background: radial-gradient(circle at top right, #0d2847, #061526, #020912);
+      color: #ffffff;
       font-family: 'Montserrat', sans-serif;
       width: 100vw;
       height: 100vh;
@@ -28,57 +31,51 @@
       gap: 2.5vw;
     }
 
-    /* Coluna de Mídia */
-    .media-section {
-      flex: 0 0 35%;
-      height: 100%;
-      background: #000000;
-      border-radius: 26px;
-      overflow: hidden;
-      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      border: 3px solid #ffffff;
+    /* Coluna de Vídeo */
+    .video-section {
+      height: 100% !important;
+      aspect-ratio: 9 / 16 !important;
+      flex: 0 0 auto !important;
+      background: #000 !important;
+      border-radius: 26px !important;
+      overflow: hidden !important;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      position: relative !important;
+      border: 3px solid rgba(255, 255, 255, 0.1) !important;
     }
-    
-    #player, #image-display {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    
+    video, 
     .progress-bar-container {
       position: absolute;
       bottom: 0;
       left: 0;
       width: 100%;
       height: 8px;
-      background: rgba(0, 0, 0, 0.25);
+      background: rgba(255, 255, 255, 0.15);
       z-index: 5;
     }
     .progress-bar {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, #09090b, #18181b);
+      background: linear-gradient(90deg, #0284c7, #38bdf8, #7dd3fc);
       transition: width 0.1s linear;
     }
 
-    /* Coluna Informativa com Fundo Translúcido e Textos em Preto */
+    /* Coluna Informativa */
     .info-section {
       flex: 1;
       height: 100%;
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.04);
       backdrop-filter: blur(18px);
-      border: 2px solid rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.25);
       border-radius: 26px;
       padding: 3.5vh 3vw;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       overflow: hidden;
-      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
     }
 
     /* Cabeçalho */
@@ -88,15 +85,15 @@
       align-items: center;
       gap: 25px;
       padding-bottom: 2vh;
-      border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     }
     .header-text {
       flex: 1;
     }
     .badge {
       display: inline-block;
-      background: #09090b;
-      color: #fde047;
+      background: linear-gradient(135deg, #0284c7, #0ea5e9);
+      color: #ffffff;
       font-size: clamp(0.75rem, 1vw, 1.05rem);
       font-weight: 800;
       text-transform: uppercase;
@@ -104,28 +101,27 @@
       padding: 6px 18px;
       border-radius: 50px;
       margin-bottom: 1vh;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
     }
     .header h1 {
       font-size: clamp(1.4rem, 2.2vw, 2.6rem);
       font-weight: 900;
       line-height: 1.2;
-      color: #09090b;
+      color: #f8fafc;
       letter-spacing: -0.5px;
-      text-transform: uppercase;
     }
     .header h1 span {
-      color: #ca8a04;
+      color: #38bdf8;
     }
 
     .logo-img {
       height: clamp(85px, 14vh, 140px);
       max-width: 260px;
       object-fit: cover;
-      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
+      filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.8));
     }
 
-    /* Área de Legenda em Preto com Tipografia Dinâmica */
+    /* Área de Texto Auto-Ajustável */
     
     
       
@@ -188,7 +184,7 @@
       background: #000 !important;
       background-color: #000 !important;
     }
-              /* === Layout Adaptativo Dinamico === */
+          /* === Layout Adaptativo Dinamico === */
     .tv-container {
       display: flex !important;
       width: 100vw !important;
@@ -266,16 +262,23 @@
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
       overflow: hidden !important;
     }
+          /* Contraste Maximo: Descricao Branca */
+    .caption-container,
+    .caption-box,
+    #caption-text,
+    #caption-container,
+    .caption {
+      color: #ffffff !important;
+      font-weight: 600 !important;
+    }
   </style>
 </head>
 <body>
 
   <div class="tv-container is-video" id="main-container">
-    <!-- Coluna de Mídia -->
-    <div class="media-section">
+    <!-- Coluna de Vídeo -->
+    <div class="video-section">
       <img id="image-player" style="display:none; width:100%; height:100%; object-fit:contain; background-color:#050505;" /><video id="player" autoplay playsinline muted loop preload="auto" style="width:100%; height:100%; object-fit:contain; background-color:#050505;"><source id="video-source" src="" type="video/mp4"></video>
-      <img id="image-display" alt="Foto do Post" style="display: none;" onerror="this.style.display='none'">
-      
       <div class="progress-bar-container">
         <div class="progress-bar" id="progress"></div>
       </div>
@@ -285,15 +288,15 @@
     <div class="info-section">
       <div class="header">
         <div class="header-text">
-          <span class="badge">Mobilidade Inteligente</span>
-          <h1>CME <span>Mobi</span></h1>
+          <span class="badge">Informa & Conecta</span>
+          <h1>Prefeitura de <span>São Lourenço</span></h1>
         </div>
-        <img src="logo.png" alt="Logo CME Mobi" class="logo-img" onerror="this.style.display='none'">
+        <img src="logo.png" alt="Logo Prefeitura de São Lourenço" class="logo-img" onerror="this.style.display='none'">
       </div>
 
       <div class="caption-container" id="caption-container">
         <div class="caption-box" id="caption-text">
-          Carregando informações...
+          Carregando informações oficiais...
         </div>
       </div>
     </div>
@@ -411,8 +414,9 @@
               player.defaultMuted = true;
               player.loop = true;
 
+              // Auto-ajuste dinâmico: vertical (9:16) ou horizontal/quadrado (layout flexível)
               player.onloadedmetadata = function() {
-                if (player.videoWidth > player.videoHeight) {
+                if (player.videoWidth >= player.videoHeight) {
                   mainContainer.classList.remove('is-video');
                   mainContainer.classList.add('is-image');
                 } else {

@@ -1,4 +1,5 @@
-﻿executar.bat
-baixar_mural.py
-cookies.txt
-.gitignore
+﻿cookies.txt
+*.tmp
+debug_login.*
+sessao_instagram/
+visao_navegador.*
