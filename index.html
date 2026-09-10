@@ -219,8 +219,7 @@
       height: 100% !important;
       object-fit: contain !important;
       border-radius: 24px !important;
-      display: block !important;
-    }
+      }
     /* QUANDO FOR IMAGEM */
     .tv-container.is-image .video-section {
       flex: 0 0 auto !important;
@@ -233,8 +232,7 @@
       height: 100% !important;
       object-fit: contain !important;
       border-radius: 20px !important;
-      display: block !important;
-    }
+      }
     .info-section {
       flex: 1 !important;
       height: 100% !important;
@@ -369,7 +367,8 @@
             }
             if (player) {
               player.pause();
-              player.style.display = 'none';
+              player.removeAttribute('src');
+              player.style.setProperty('display', 'none', 'important');
             }
             if (imagePlayer) {
               imagePlayer.style.display = 'block';
