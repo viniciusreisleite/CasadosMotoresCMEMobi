@@ -47,6 +47,8 @@ def baixar_midia_por_tipo(shortcode, out_prefix, cookies_dict):
         items = data.get("items", [])
         if not items: return None, None
         item = items[0]
+        if item.get('timeline_pinned_user_ids') or item.get('is_pinned'):
+            return 'pinned', None
         media_type = item.get("media_type")
         if media_type == 8:
             carousel = item.get("carousel_media", [])
@@ -120,6 +122,8 @@ def main():
                 pass
 
             tipo, arquivo = baixar_midia_por_tipo(sc, out_prefix, cookies_dict)
+            if tipo == 'pinned':
+                continue
             if arquivo and os.path.exists(arquivo):
                 posts_a_manter.append({
                     "id": sc, "url": url, "caption": caption, "tipo": tipo,
