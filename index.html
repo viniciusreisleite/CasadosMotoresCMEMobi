@@ -350,6 +350,9 @@
           }
 
           var texto = currentPost.caption || currentPost.text || '';
+          texto = texto.replace(/^.*?on Instagram:\s*["“”]?/i, '');
+          texto = texto.replace(/^.*?no Instagram:\s*["“”]?/i, '');
+          texto = texto.replace(/["“”]$/, '');
           texto = texto.replace(/\n{3,}/g, '\n\n').trim();
 
           if (captionElem) {
