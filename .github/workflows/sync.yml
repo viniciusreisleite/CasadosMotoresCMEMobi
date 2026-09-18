@@ -1,8 +1,6 @@
 name: Sincronizar Instagram - CME Mobi
 
 on:
-  schedule:
-    - cron: '0 */3 * * *'
   workflow_dispatch:
 
 permissions:
